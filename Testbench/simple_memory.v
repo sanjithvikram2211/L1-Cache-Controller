@@ -1,5 +1,3 @@
-// Simulation-only main memory: 256 lines x 128 bits = 4 KiB.
-// Address [11:4] selects a 16-byte cache line. Contents persist across reset.
 module simple_memory (
     input wire clk, reset,
     input wire mem_req, mem_we,
@@ -23,8 +21,6 @@ module simple_memory (
         end
     end
 
-    // A request is accepted once per assertion of mem_req. The cache must
-    // deassert mem_req for at least one clock before issuing another command.
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             busy <= 1'b0;
