@@ -1,7 +1,3 @@
-// Direct-mapped, write-back, write-allocate L1 cache controller.
-// 4 lines x 4 words/line x 32 bits = 64-byte data capacity.
-// CPU interface: one outstanding aligned 32-bit request; hold cpu_req and
-// its address/data stable until cpu_ready is observed.
 module cache_controller (
     input wire clk, reset,
     input wire cpu_req, cpu_we,
@@ -54,13 +50,9 @@ module cache_controller (
     reg [1:0] request_index, request_word_offset;
     reg [31:0] request_line_address;
 
-    // A held-high CPU request is accepted only once. The requester must
-    // lower cpu_req before another request can be accepted.
     reg request_armed;
     wire accepted_req = cpu_req && request_armed;
 
-    // A miss is counted once even though the request returns to LOOKUP
-    // after the memory refill (REPLAY -> LOOKUP).
     reg miss_already_counted;
     wire cache_hit = stored_valid && (stored_tag == request_tag);
 
@@ -74,7 +66,6 @@ module cache_controller (
         .next_state(next_state)
     );
 
-    // Latch the complete request and decoded address fields on acceptance.
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             state <= IDLE;
@@ -110,7 +101,6 @@ module cache_controller (
         end
     end
 
-    // All cache-array accesses use the latched request index/offset.
     always @(*) begin
         cpu_ready = 1'b0;
         cpu_rdata = 32'd0;
@@ -139,7 +129,6 @@ module cache_controller (
 
         case (state)
             IDLE: begin
-                // Wait for a new CPU request.
             end
 
             LOOKUP: begin
@@ -171,7 +160,6 @@ module cache_controller (
             end
 
             WB_GAP: begin
-                // mem_req is low for one cycle to re-arm the memory model.
             end
 
             REFILL_REQ, REFILL_WAIT: begin
@@ -190,8 +178,6 @@ module cache_controller (
             end
 
             REPLAY: begin
-                // Return to LOOKUP so the refilled line is checked and the
-                // original read/write is completed through the normal path.
             end
 
             default: begin
