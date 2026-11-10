@@ -1,5 +1,4 @@
-// Four-entry tag, valid and dirty array. Read is asynchronous; writes/reset
-// occur on the rising clock edge. Main-memory contents are not reset by cache reset.
+
 module cache_tag_array (
     input wire clk, reset,
     input wire [1:0] index,
