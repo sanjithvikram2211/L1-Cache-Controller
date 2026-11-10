@@ -37,8 +37,7 @@ module cache_controller_tb;
 
     always #5 clk = ~clk;
 
-    // One request is held high until cpu_ready. It is then lowered for a
-    // clock interval before the next request, matching the CPU handshake.
+
     task cpu_access;
         input write_enable;
         input [31:0] address;
@@ -108,24 +107,20 @@ module cache_controller_tb;
             $display("RESET CHECK PASS");
         end
 
-        // Cold write miss, allocate line, then read hit.
         cpu_access(1'b1, 32'h00000000, 32'h12345678, 32'd0, 1'b0);
         cpu_access(1'b0, 32'h00000000, 32'd0, 32'h12345678, 1'b1);
 
-        // 0x00 and 0x40 share index 0: dirty eviction/writeback.
         cpu_access(1'b1, 32'h00000040, 32'hCAFEBABE, 32'd0, 1'b0);
 
-        // Reload 0x00; this forces writeback of dirty 0x40 line too.
+     
         cpu_access(1'b0, 32'h00000000, 32'd0, 32'h12345678, 1'b1);
         cpu_access(1'b0, 32'h00000040, 32'd0, 32'hCAFEBABE, 1'b1);
 
-        // Index 1: another cold write miss followed by a read hit.
         cpu_access(1'b1, 32'h00000010, 32'h0BADF00D, 32'd0, 1'b0);
         cpu_access(1'b0, 32'h00000010, 32'd0, 32'h0BADF00D, 1'b1);
 
         repeat (3) @(negedge clk);
 
-        // Directly verify that both dirty evictions reached main memory.
         if (memory_model.memory[0][31:0] === 32'h12345678)
             $display("WRITEBACK PASS addr=00000000 data=12345678");
         else begin
